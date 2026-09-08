@@ -14,7 +14,9 @@ app.use(express.json());
 app.use(express.static(path.join(__dirname, '..')));
 
 // database.sqlite wordt automatisch aangemaakt als het nog niet bestaat
-const db = new Database('database.sqlite');
+// Lokaal: gewoon een bestand hier in de map. Op Railway: DB_PATH wijst naar de permanente volume.
+const dbPath = process.env.DB_PATH || 'database.sqlite';
+const db = new Database(dbPath);
 
 // E-mail transporter (gebruikt de gegevens uit .env)
 const transporter = nodemailer.createTransport({
