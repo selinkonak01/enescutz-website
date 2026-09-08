@@ -10,8 +10,8 @@ app.use(cors());
 app.use(express.json());
 
 // Serveer de front-end bestanden (index.html, style.css, script.js, admin.html, assets, ...)
-// die in de map staan net boven deze 'server'-map
-app.use(express.static(path.join(__dirname, '..')));
+// die in de 'public'-map staan
+app.use(express.static(path.join(__dirname, 'public')));
 
 // database.sqlite wordt automatisch aangemaakt als het nog niet bestaat
 // Lokaal: gewoon een bestand hier in de map. Op Railway: DB_PATH wijst naar de permanente volume.
