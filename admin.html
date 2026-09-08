@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="nl">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>EnesCutz - Beheer</title>
+    <link rel="stylesheet" href="style.css" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Anton&family=Dancing+Script:wght@600&family=Poppins:wght@300;400;600&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="icon" type="image/png" href="assets/Logo/favicon.png" />
+  </head>
+  <body>
+    <header>
+      <nav>
+        <div class="nav-brand">
+          <img src="assets/Logo/logo-white.png" alt="EnesCutz" />
+        </div>
+      </nav>
+    </header>
+
+    <section id="admin-login">
+      <span class="overline center">Beheer</span>
+      <h2>Log in</h2>
+      <form id="login-form" class="admin-form">
+        <label for="password">Wachtwoord</label>
+        <input type="password" id="password" required />
+        <button type="submit" class="btn btn-outline">Inloggen</button>
+        <p id="login-message"></p>
+      </form>
+    </section>
+
+    <section id="admin-panel" class="hidden">
+      <span class="overline center">Beheer</span>
+      <h2>Boekingen</h2>
+      <div class="table-wrapper">
+        <table id="bookings-table">
+          <thead>
+            <tr>
+              <th>Datum</th>
+              <th>Tijd</th>
+              <th>Klant</th>
+              <th>Telefoon</th>
+              <th>Dienst</th>
+              <th>Status</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody id="bookings-body"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <script src="admin.js"></script>
+  </body>
+</html>
