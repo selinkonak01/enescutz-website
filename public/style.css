@@ -277,6 +277,23 @@ section h2 {
 }
 
 /* Contact */
+.adres {
+  font-family: var(--font-label);
+  font-size: 1rem;
+  color: var(--color-cream);
+  margin-bottom: 0.4rem;
+}
+.adres-extra {
+  font-size: 0.8rem;
+  color: var(--color-gray);
+}
+.locatie-links {
+  display: flex;
+  justify-content: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+  margin: 1.5rem 0 2.5rem;
+}
 .socials {
   list-style: none;
   display: flex;
