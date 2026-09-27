@@ -344,6 +344,19 @@ footer {
   border-top: 1px solid rgba(245, 241, 234, 0.1);
   padding-top: 1.5rem;
 }
+.footer-credit {
+  text-align: center;
+  font-size: 0.75rem;
+  color: var(--color-gray);
+  margin-top: 0.5rem;
+}
+.footer-credit a {
+  color: var(--color-gold);
+  text-decoration: none;
+}
+.footer-credit a:hover {
+  text-decoration: underline;
+}
 
 /* Modal */
 .hidden {
