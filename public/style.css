@@ -518,3 +518,9 @@ footer {
   margin-top: -0.4rem;
   min-height: 1em;
 }
+
+/* Het kalender-icoontje van het datumveld was donker en onzichtbaar op de donkere achtergrond */
+#booking-form input[type="date"]::-webkit-calendar-picker-indicator {
+  filter: invert(1);
+  cursor: pointer;
+}
