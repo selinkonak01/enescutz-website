@@ -1,4 +1,7 @@
 require('dotenv').config();
+// Forceer IPv4 voor uitgaande verbindingen: sommige hosting-platformen (zoals Railway)
+// hebben geen werkende IPv6-uitgang, waardoor mailverzending naar Gmail anders vasthangt of faalt.
+require('dns').setDefaultResultOrder('ipv4first');
 const express = require('express');
 const cors = require('cors');
 const path = require('path');
@@ -26,6 +29,7 @@ const transporter = nodemailer.createTransport({
     user: process.env.GMAIL_USER,
     pass: process.env.GMAIL_APP_PASSWORD,
   },
+  family: 4, // extra zekerheid: verbind altijd via IPv4
 });
 
 // SMS-client (Twilio) voor de boekingsmelding naar Enes' telefoon.
