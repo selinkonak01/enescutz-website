@@ -349,10 +349,37 @@ app.get('/api/bookings/:id/ics', checkAdminWachtwoord, (req, res) => {
   const eindeMinuten = startMinuten + boeking.duur_minuten;
 
   const pad = (n) => String(n).padStart(2, '0');
-  const naarIcsDatum = (minutenVanDag) => {
+
+  // Belgische lokale tijd (Europe/Brussels) correct omzetten naar UTC, incl. zomer-/wintertijd.
+  // Zonder dit interpreteren sommige agenda-apps de tijd verkeerd, waardoor de afspraak
+  // op een fout uur (en soms zelfs de verkeerde dag) terechtkomt.
+  function tzOffsetMinuten(timeZone, moment) {
+    const dtf = new Intl.DateTimeFormat('en-US', {
+      timeZone,
+      hour12: false,
+      year: 'numeric', month: '2-digit', day: '2-digit',
+      hour: '2-digit', minute: '2-digit', second: '2-digit',
+    });
+    const delen = dtf.formatToParts(moment).reduce((acc, d) => {
+      acc[d.type] = d.value;
+      return acc;
+    }, {});
+    const uur = delen.hour === '24' ? 0 : Number(delen.hour);
+    const alsUTC = Date.UTC(Number(delen.year), Number(delen.month) - 1, Number(delen.day), uur, Number(delen.minute), Number(delen.second));
+    return (alsUTC - moment.getTime()) / 60000;
+  }
+
+  function brusselsNaarUTC(minutenVanDag) {
     const u = Math.floor(minutenVanDag / 60);
     const m = minutenVanDag % 60;
-    return `${jaar}${pad(maand)}${pad(dag)}T${pad(u)}${pad(m)}00`;
+    const gok = new Date(Date.UTC(jaar, maand - 1, dag, u, m));
+    const offset = tzOffsetMinuten('Europe/Brussels', gok);
+    return new Date(gok.getTime() - offset * 60000);
+  }
+
+  const naarIcsDatum = (minutenVanDag) => {
+    const d = brusselsNaarUTC(minutenVanDag);
+    return `${d.getUTCFullYear()}${pad(d.getUTCMonth() + 1)}${pad(d.getUTCDate())}T${pad(d.getUTCHours())}${pad(d.getUTCMinutes())}${pad(d.getUTCSeconds())}Z`;
   };
 
   const nu = new Date();
