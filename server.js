@@ -4,6 +4,7 @@ const cors = require('cors');
 const path = require('path');
 const Database = require('better-sqlite3');
 const nodemailer = require('nodemailer');
+const twilio = require('twilio');
 
 const app = express();
 app.use(cors());
@@ -26,6 +27,16 @@ const transporter = nodemailer.createTransport({
     pass: process.env.GMAIL_APP_PASSWORD,
   },
 });
+
+// SMS-client (Twilio) voor de boekingsmelding naar Enes' telefoon.
+// Zolang de Twilio-gegevens nog niet zijn ingevuld in .env, blijft dit
+// gewoon uitgeschakeld zonder de server te laten crashen.
+const twilioIngesteld = Boolean(
+  process.env.TWILIO_ACCOUNT_SID && process.env.TWILIO_AUTH_TOKEN && process.env.TWILIO_FROM_NUMBER && process.env.TWILIO_TO_NUMBER
+);
+const twilioClient = twilioIngesteld
+  ? twilio(process.env.TWILIO_ACCOUNT_SID, process.env.TWILIO_AUTH_TOKEN)
+  : null;
 
 // Beveiliging voor Enes' beheerscherm: check het wachtwoord uit .env
 function checkAdminWachtwoord(req, res, next) {
@@ -220,7 +231,7 @@ app.post('/api/bookings', (req, res) => {
   );
   const resultaat = insert.run(klant_naam, klant_telefoon, dienst_id, datum, tijdslot);
 
-  // Mailtje sturen naar Enes, maar de klant niet laten wachten als dit faalt.
+  // Mailtje + sms sturen naar Enes, maar de klant niet laten wachten als dit faalt.
   // Dit gebeurt voor élke boeking, ongeacht of Enes op dat moment ingelogd
   // is in het beheerscherm — zo mist hij nooit een nieuwe afspraak.
   function stuurBoekingsmail(pogingenOver = 2) {
@@ -246,6 +257,26 @@ Tijdstip: ${tijdslot}`,
       });
   }
   stuurBoekingsmail();
+
+  function stuurBoekingssms(pogingenOver = 2) {
+    if (!twilioClient) {
+      console.log('SMS-melding overgeslagen: Twilio is nog niet ingesteld in .env');
+      return;
+    }
+    twilioClient.messages
+      .create({
+        from: process.env.TWILIO_FROM_NUMBER,
+        to: process.env.TWILIO_TO_NUMBER,
+        body: `${klant_naam} heeft geboekt: ${dienst.naam} op ${datumVoluit(datum)} om ${tijdslot}`,
+      })
+      .catch((err) => {
+        console.error('Sms versturen mislukt:', err.message);
+        if (pogingenOver > 1) {
+          setTimeout(() => stuurBoekingssms(pogingenOver - 1), 5000);
+        }
+      });
+  }
+  stuurBoekingssms();
 
   res.status(201).json({ id: resultaat.lastInsertRowid, klant_naam, klant_telefoon, dienst_id, datum, tijdslot });
 });
