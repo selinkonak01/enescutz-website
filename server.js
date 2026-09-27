@@ -308,6 +308,16 @@ app.patch('/api/bookings/:id/annuleer', checkAdminWachtwoord, (req, res) => {
   res.json({ succes: true });
 });
 
+// Boeking definitief verwijderen uit de lijst (enkel voor Enes) - zodat de lijst niet blijft aangroeien
+app.delete('/api/bookings/:id', checkAdminWachtwoord, (req, res) => {
+  const { id } = req.params;
+  const resultaat = db.prepare('DELETE FROM bookings WHERE id = ?').run(id);
+  if (resultaat.changes === 0) {
+    return res.status(404).json({ fout: 'Boeking niet gevonden' });
+  }
+  res.json({ succes: true });
+});
+
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log(`Server draait op http://localhost:${PORT}`);

@@ -72,11 +72,14 @@ function renderBoekingen(boekingen, wachtwoord) {
         <td>${b.klant_telefoon}</td>
         <td>${b.dienst_naam}</td>
         <td class="${b.status === 'geannuleerd' ? 'status-geannuleerd' : ''}">${b.status}</td>
-        <td>${
-          b.status === 'bevestigd'
-            ? `<button class="cancel-btn" data-id="${b.id}" data-naam="${b.klant_naam}" data-telefoon="${b.klant_telefoon}" data-datum="${b.datum}" data-tijdslot="${b.tijdslot}">Annuleer</button>`
-            : ''
-        }</td>
+        <td class="acties">
+          ${
+            b.status === 'bevestigd'
+              ? `<button class="cancel-btn" data-id="${b.id}" data-naam="${b.klant_naam}" data-telefoon="${b.klant_telefoon}" data-datum="${b.datum}" data-tijdslot="${b.tijdslot}">Annuleer</button>`
+              : ''
+          }
+          <button class="delete-btn" data-id="${b.id}" data-naam="${b.klant_naam}" data-datum="${b.datum}" data-tijdslot="${b.tijdslot}">Verwijder</button>
+        </td>
       </tr>
     `
     )
@@ -95,6 +98,22 @@ function renderBoekingen(boekingen, wachtwoord) {
       const nummer = naarWhatsappNummer(telefoon);
       const bericht = `Hoi ${naam}, je afspraak op ${datumVoluit(datum)} om ${tijdslot} bij EnesCutz is helaas geannuleerd. Neem gerust contact op om een nieuwe afspraak te maken!`;
       window.open(`https://wa.me/${nummer}?text=${encodeURIComponent(bericht)}`, '_blank');
+
+      toonPaneel(wachtwoord);
+    });
+  });
+
+  bookingsBody.querySelectorAll('.delete-btn').forEach((btn) => {
+    btn.addEventListener('click', async () => {
+      const { id, naam, datum, tijdslot } = btn.dataset;
+
+      const zeker = confirm(`Boeking van ${naam} op ${datumVoluit(datum)} om ${tijdslot} definitief verwijderen uit de lijst?`);
+      if (!zeker) return;
+
+      await fetch(`${API_URL}/api/bookings/${id}`, {
+        method: 'DELETE',
+        headers: { 'x-admin-password': wachtwoord },
+      });
 
       toonPaneel(wachtwoord);
     });

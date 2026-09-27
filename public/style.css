@@ -509,6 +509,26 @@ footer {
   background-color: var(--color-gold);
   color: var(--color-black);
 }
+.acties {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+.delete-btn {
+  background: none;
+  border: 1px solid salmon;
+  color: salmon;
+  padding: 0.3rem 0.8rem;
+  border-radius: 2px;
+  font-size: 0.75rem;
+  cursor: pointer;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+.delete-btn:hover {
+  background-color: salmon;
+  color: var(--color-black);
+}
 
 /* Volledig uitgeschreven datum onder het datumveld in het boekingsformulier */
 .datum-voluit {
