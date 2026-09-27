@@ -8,6 +8,7 @@ const dienstSelect = document.getElementById('dienst');
 const datumInput = document.getElementById('datum');
 const tijdslotSelect = document.getElementById('tijdslot');
 const messageEl = document.getElementById('booking-message');
+const datumVoluitEl = document.getElementById('datum-voluit');
 
 // Geen data uit het verleden laten kiezen
 datumInput.min = new Date().toISOString().split('T')[0];
@@ -61,16 +62,28 @@ function isDinsdag(datumStr) {
   return new Date(jaar, maand - 1, dag).getDay() === 2;
 }
 
+// Nederlandse maandnamen om de gekozen datum voluit te tonen ("13 november 2026")
+const MAAND_NAMEN = [
+  'januari', 'februari', 'maart', 'april', 'mei', 'juni',
+  'juli', 'augustus', 'september', 'oktober', 'november', 'december',
+];
+function datumVoluit(datumStr) {
+  const [jaar, maand, dag] = datumStr.split('-').map(Number);
+  return `${dag} ${MAAND_NAMEN[maand - 1]} ${jaar}`;
+}
+
 dienstSelect.addEventListener('change', laadBeschikbaarheid);
 datumInput.addEventListener('change', () => {
   if (datumInput.value && isDinsdag(datumInput.value)) {
     messageEl.style.color = 'salmon';
     messageEl.textContent = 'We zijn dinsdag gesloten. Kies een andere dag.';
     datumInput.value = '';
+    datumVoluitEl.textContent = '';
     tijdslotSelect.innerHTML = '<option value="">Kies eerst een datum</option>';
     return;
   }
   messageEl.textContent = '';
+  datumVoluitEl.textContent = datumInput.value ? datumVoluit(datumInput.value) : '';
   laadBeschikbaarheid();
 });
 
@@ -99,6 +112,7 @@ form.addEventListener('submit', async (e) => {
     messageEl.style.color = 'lightgreen';
     messageEl.textContent = 'Je afspraak is bevestigd!';
     form.reset();
+    datumVoluitEl.textContent = '';
     setTimeout(() => modal.classList.add('hidden'), 1500);
   } else {
     messageEl.style.color = 'salmon';

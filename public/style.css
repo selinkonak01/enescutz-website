@@ -509,3 +509,12 @@ footer {
   background-color: var(--color-gold);
   color: var(--color-black);
 }
+
+/* Volledig uitgeschreven datum onder het datumveld in het boekingsformulier */
+.datum-voluit {
+  font-family: var(--font-label);
+  font-size: 0.82rem;
+  color: var(--color-gold);
+  margin-top: -0.4rem;
+  min-height: 1em;
+}
