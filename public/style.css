@@ -529,6 +529,36 @@ footer {
   background-color: salmon;
   color: var(--color-black);
 }
+.confirm-btn {
+  background: none;
+  border: 1px solid #8a9a5b;
+  color: #8a9a5b;
+  padding: 0.3rem 0.8rem;
+  border-radius: 2px;
+  font-size: 0.75rem;
+  cursor: pointer;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+.confirm-btn:hover {
+  background-color: #8a9a5b;
+  color: var(--color-black);
+}
+.agenda-btn {
+  background: none;
+  border: 1px solid var(--color-gray);
+  color: var(--color-gray);
+  padding: 0.3rem 0.8rem;
+  border-radius: 2px;
+  font-size: 0.75rem;
+  cursor: pointer;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+.agenda-btn:hover {
+  background-color: var(--color-gray);
+  color: var(--color-black);
+}
 
 /* Volledig uitgeschreven datum onder het datumveld in het boekingsformulier */
 .datum-voluit {

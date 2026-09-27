@@ -110,7 +110,7 @@ form.addEventListener('submit', async (e) => {
 
   if (response.ok) {
     messageEl.style.color = 'lightgreen';
-    messageEl.textContent = 'Je afspraak is bevestigd!';
+    messageEl.textContent = 'Je afspraak is ontvangen! Enes bevestigt ze zo snel mogelijk.';
     form.reset();
     datumVoluitEl.textContent = '';
     setTimeout(() => modal.classList.add('hidden'), 1500);

@@ -231,7 +231,7 @@ app.post('/api/bookings', (req, res) => {
   }
 
   const insert = db.prepare(
-    'INSERT INTO bookings (klant_naam, klant_telefoon, dienst_id, datum, tijdslot) VALUES (?, ?, ?, ?, ?)'
+    "INSERT INTO bookings (klant_naam, klant_telefoon, dienst_id, datum, tijdslot, status) VALUES (?, ?, ?, ?, ?, 'in afwachting')"
   );
   const resultaat = insert.run(klant_naam, klant_telefoon, dienst_id, datum, tijdslot);
 
@@ -306,6 +306,77 @@ app.patch('/api/bookings/:id/annuleer', checkAdminWachtwoord, (req, res) => {
     return res.status(404).json({ fout: 'Boeking niet gevonden' });
   }
   res.json({ succes: true });
+});
+
+// Boeking bevestigen (enkel voor Enes)
+app.patch('/api/bookings/:id/bevestig', checkAdminWachtwoord, (req, res) => {
+  const { id } = req.params;
+  const resultaat = db.prepare("UPDATE bookings SET status = 'bevestigd' WHERE id = ?").run(id);
+  if (resultaat.changes === 0) {
+    return res.status(404).json({ fout: 'Boeking niet gevonden' });
+  }
+  res.json({ succes: true });
+});
+
+// Tekst veilig maken voor in een .ics-bestand (komma's, puntkomma's, backslashes en regeleinden moeten escaped worden)
+function icsVeilig(tekst) {
+  return String(tekst)
+    .replace(/\\/g, '\\\\')
+    .replace(/,/g, '\\,')
+    .replace(/;/g, '\\;')
+    .replace(/\n/g, '\\n');
+}
+
+// .ics-kalenderbestand voor 1 boeking, om in 1 klik toe te voegen aan Apple Agenda (of een andere kalender-app)
+app.get('/api/bookings/:id/ics', checkAdminWachtwoord, (req, res) => {
+  const { id } = req.params;
+  const boeking = db
+    .prepare(
+      `SELECT bookings.id, bookings.klant_naam, bookings.klant_telefoon, bookings.datum, bookings.tijdslot,
+              services.naam AS dienst_naam, services.duur_minuten
+       FROM bookings
+       JOIN services ON bookings.dienst_id = services.id
+       WHERE bookings.id = ?`
+    )
+    .get(id);
+
+  if (!boeking) {
+    return res.status(404).json({ fout: 'Boeking niet gevonden' });
+  }
+
+  const [jaar, maand, dag] = boeking.datum.split('-').map(Number);
+  const startMinuten = tijdNaarMinuten(boeking.tijdslot);
+  const eindeMinuten = startMinuten + boeking.duur_minuten;
+
+  const pad = (n) => String(n).padStart(2, '0');
+  const naarIcsDatum = (minutenVanDag) => {
+    const u = Math.floor(minutenVanDag / 60);
+    const m = minutenVanDag % 60;
+    return `${jaar}${pad(maand)}${pad(dag)}T${pad(u)}${pad(m)}00`;
+  };
+
+  const nu = new Date();
+  const dtstamp = `${nu.getUTCFullYear()}${pad(nu.getUTCMonth() + 1)}${pad(nu.getUTCDate())}T${pad(nu.getUTCHours())}${pad(nu.getUTCMinutes())}${pad(nu.getUTCSeconds())}Z`;
+
+  const ics = [
+    'BEGIN:VCALENDAR',
+    'VERSION:2.0',
+    'PRODID:-//EnesCutz//Boekingen//NL',
+    'CALSCALE:GREGORIAN',
+    'BEGIN:VEVENT',
+    `UID:boeking-${boeking.id}@enescutz.be`,
+    `DTSTAMP:${dtstamp}`,
+    `DTSTART:${naarIcsDatum(startMinuten)}`,
+    `DTEND:${naarIcsDatum(eindeMinuten)}`,
+    `SUMMARY:${icsVeilig(boeking.dienst_naam + ' - ' + boeking.klant_naam)}`,
+    `DESCRIPTION:${icsVeilig('Telefoon: ' + boeking.klant_telefoon)}`,
+    'END:VEVENT',
+    'END:VCALENDAR',
+  ].join('\r\n');
+
+  res.setHeader('Content-Type', 'text/calendar; charset=utf-8');
+  res.setHeader('Content-Disposition', `attachment; filename="afspraak-${boeking.id}.ics"`);
+  res.send(ics);
 });
 
 // Boeking definitief verwijderen uit de lijst (enkel voor Enes) - zodat de lijst niet blijft aangroeien

@@ -74,8 +74,18 @@ function renderBoekingen(boekingen, wachtwoord) {
         <td class="${b.status === 'geannuleerd' ? 'status-geannuleerd' : ''}">${b.status}</td>
         <td class="acties">
           ${
-            b.status === 'bevestigd'
+            b.status === 'in afwachting'
+              ? `<button class="confirm-btn" data-id="${b.id}" data-naam="${b.klant_naam}" data-telefoon="${b.klant_telefoon}" data-datum="${b.datum}" data-tijdslot="${b.tijdslot}">Bevestig</button>`
+              : ''
+          }
+          ${
+            b.status !== 'geannuleerd'
               ? `<button class="cancel-btn" data-id="${b.id}" data-naam="${b.klant_naam}" data-telefoon="${b.klant_telefoon}" data-datum="${b.datum}" data-tijdslot="${b.tijdslot}">Annuleer</button>`
+              : ''
+          }
+          ${
+            b.status !== 'geannuleerd'
+              ? `<button class="agenda-btn" data-id="${b.id}">Agenda</button>`
               : ''
           }
           <button class="delete-btn" data-id="${b.id}" data-naam="${b.klant_naam}" data-datum="${b.datum}" data-tijdslot="${b.tijdslot}">Verwijder</button>
@@ -100,6 +110,41 @@ function renderBoekingen(boekingen, wachtwoord) {
       window.open(`https://wa.me/${nummer}?text=${encodeURIComponent(bericht)}`, '_blank');
 
       toonPaneel(wachtwoord);
+    });
+  });
+
+  bookingsBody.querySelectorAll('.confirm-btn').forEach((btn) => {
+    btn.addEventListener('click', async () => {
+      const { id, naam, telefoon, datum, tijdslot } = btn.dataset;
+
+      await fetch(`${API_URL}/api/bookings/${id}/bevestig`, {
+        method: 'PATCH',
+        headers: { 'x-admin-password': wachtwoord },
+      });
+
+      // WhatsApp-bevestigingsbericht klaarzetten voor de klant, Enes moet enkel nog op verzenden klikken
+      const nummer = naarWhatsappNummer(telefoon);
+      const bericht = `Hoi ${naam}, je afspraak op ${datumVoluit(datum)} om ${tijdslot} bij EnesCutz is bevestigd! Tot dan.`;
+      window.open(`https://wa.me/${nummer}?text=${encodeURIComponent(bericht)}`, '_blank');
+
+      toonPaneel(wachtwoord);
+    });
+  });
+
+  bookingsBody.querySelectorAll('.agenda-btn').forEach((btn) => {
+    btn.addEventListener('click', async () => {
+      const { id } = btn.dataset;
+
+      const response = await fetch(`${API_URL}/api/bookings/${id}/ics`, {
+        headers: { 'x-admin-password': wachtwoord },
+      });
+      if (!response.ok) return;
+
+      // .ics-bestand openen: op Mac/iPhone opent dit automatisch de "Voeg toe aan agenda"-melding van Apple Kalender
+      const blob = await response.blob();
+      const url = URL.createObjectURL(blob);
+      window.open(url, '_blank');
+      setTimeout(() => URL.revokeObjectURL(url), 10000);
     });
   });
 
