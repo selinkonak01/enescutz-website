@@ -42,6 +42,16 @@ async function toonPaneel(wachtwoord) {
   return true;
 }
 
+// Nederlandse maandnamen om een ISO-datum ("2026-11-13") voluit te tonen ("13 november 2026")
+const MAAND_NAMEN = [
+  'januari', 'februari', 'maart', 'april', 'mei', 'juni',
+  'juli', 'augustus', 'september', 'oktober', 'november', 'december',
+];
+function datumVoluit(datum) {
+  const [jaar, maand, dag] = datum.split('-').map(Number);
+  return `${dag} ${MAAND_NAMEN[maand - 1]} ${jaar}`;
+}
+
 // Belgisch nummer (bv. 0485 85 05 00) omzetten naar internationaal formaat voor WhatsApp
 function naarWhatsappNummer(telefoon) {
   const cijfers = telefoon.replace(/\D/g, '');
@@ -56,7 +66,7 @@ function renderBoekingen(boekingen, wachtwoord) {
     .map(
       (b) => `
       <tr>
-        <td>${b.datum}</td>
+        <td>${datumVoluit(b.datum)}</td>
         <td>${b.tijdslot}</td>
         <td>${b.klant_naam}</td>
         <td>${b.klant_telefoon}</td>
@@ -83,7 +93,7 @@ function renderBoekingen(boekingen, wachtwoord) {
 
       // WhatsApp-bericht klaarzetten voor de klant, Enes moet enkel nog op verzenden klikken
       const nummer = naarWhatsappNummer(telefoon);
-      const bericht = `Hoi ${naam}, je afspraak op ${datum} om ${tijdslot} bij EnesCutz is helaas geannuleerd. Neem gerust contact op om een nieuwe afspraak te maken!`;
+      const bericht = `Hoi ${naam}, je afspraak op ${datumVoluit(datum)} om ${tijdslot} bij EnesCutz is helaas geannuleerd. Neem gerust contact op om een nieuwe afspraak te maken!`;
       window.open(`https://wa.me/${nummer}?text=${encodeURIComponent(bericht)}`, '_blank');
 
       toonPaneel(wachtwoord);

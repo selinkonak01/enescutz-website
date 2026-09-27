@@ -83,6 +83,22 @@ function minutenNaarTijd(minuten) {
   return String(uren).padStart(2, '0') + ':' + String(min).padStart(2, '0');
 }
 
+// Nederlandse maandnamen om een ISO-datum ("2026-11-13") voluit te tonen ("13 november 2026")
+const MAAND_NAMEN = [
+  'januari', 'februari', 'maart', 'april', 'mei', 'juni',
+  'juli', 'augustus', 'september', 'oktober', 'november', 'december',
+];
+function datumVoluit(datum) {
+  const [jaar, maand, dag] = datum.split('-').map(Number);
+  return `${dag} ${MAAND_NAMEN[maand - 1]} ${jaar}`;
+}
+
+// Enes is dinsdag niet bereikbaar: die dag is de zaak volledig gesloten
+function isGeslotenOpDatum(datum) {
+  const dag = new Date(datum + 'T00:00:00').getDay(); // 0 = zondag, 2 = dinsdag
+  return dag === 2;
+}
+
 // geeft de openingsuren (in minuten) terug voor een bepaalde datum
 function openingsurenVoorDatum(datum) {
   const dag = new Date(datum + 'T00:00:00').getDay(); // 0 = zondag, 6 = zaterdag
@@ -111,6 +127,11 @@ app.get('/api/beschikbaarheid', (req, res) => {
   const dienst = db.prepare('SELECT * FROM services WHERE id = ?').get(dienst_id);
   if (!dienst) {
     return res.status(404).json({ fout: 'Dienst niet gevonden' });
+  }
+
+  // Dinsdag is Enes niet bereikbaar: geen enkel tijdslot beschikbaar
+  if (isGeslotenOpDatum(datum)) {
+    return res.json([]);
   }
 
   const { start, einde } = openingsurenVoorDatum(datum);
@@ -158,6 +179,11 @@ app.post('/api/bookings', (req, res) => {
     return res.status(404).json({ fout: 'Dienst niet gevonden' });
   }
 
+  // Dinsdag is Enes niet bereikbaar: geen boekingen die dag toelaten
+  if (isGeslotenOpDatum(datum)) {
+    return res.status(400).json({ fout: 'We zijn dinsdag gesloten. Kies een andere dag.' });
+  }
+
   // Dubbel-check: is dit tijdslot nog wel vrij? (voorkomt dubbele boekingen)
   const { start, einde } = openingsurenVoorDatum(datum);
   const duur = dienst.duur_minuten;
@@ -194,21 +220,32 @@ app.post('/api/bookings', (req, res) => {
   );
   const resultaat = insert.run(klant_naam, klant_telefoon, dienst_id, datum, tijdslot);
 
-  // Mailtje sturen naar Enes, maar de klant niet laten wachten als dit faalt
-  transporter
-    .sendMail({
-      from: process.env.GMAIL_USER,
-      to: process.env.GMAIL_USER,
-      subject: `Nieuwe boeking: ${klant_naam} - ${datum} om ${tijdslot}`,
-      text: `Nieuwe afspraak via de website:
+  // Mailtje sturen naar Enes, maar de klant niet laten wachten als dit faalt.
+  // Dit gebeurt voor élke boeking, ongeacht of Enes op dat moment ingelogd
+  // is in het beheerscherm — zo mist hij nooit een nieuwe afspraak.
+  function stuurBoekingsmail(pogingenOver = 2) {
+    transporter
+      .sendMail({
+        from: process.env.GMAIL_USER,
+        to: process.env.GMAIL_USER,
+        subject: `Nieuwe boeking: ${klant_naam} - ${datumVoluit(datum)} om ${tijdslot}`,
+        text: `Nieuwe afspraak via de website:
 
 Klant: ${klant_naam}
 Telefoon: ${klant_telefoon}
 Dienst: ${dienst.naam}
-Datum: ${datum}
+Datum: ${datumVoluit(datum)}
 Tijdstip: ${tijdslot}`,
-    })
-    .catch((err) => console.error('Mail versturen mislukt:', err.message));
+      })
+      .catch((err) => {
+        console.error('Mail versturen mislukt:', err.message);
+        // Nog één nieuwe poging na een korte pauze, voor als het aan een tijdelijk netwerkprobleem ligt
+        if (pogingenOver > 1) {
+          setTimeout(() => stuurBoekingsmail(pogingenOver - 1), 5000);
+        }
+      });
+  }
+  stuurBoekingsmail();
 
   res.status(201).json({ id: resultaat.lastInsertRowid, klant_naam, klant_telefoon, dienst_id, datum, tijdslot });
 });

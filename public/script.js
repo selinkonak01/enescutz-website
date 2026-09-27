@@ -55,8 +55,24 @@ async function laadBeschikbaarheid() {
   tijdslotSelect.innerHTML = sloten.map((tijd) => `<option value="${tijd}">${tijd}</option>`).join('');
 }
 
+// Enes is dinsdag niet bereikbaar: die dag kan niet gekozen worden
+function isDinsdag(datumStr) {
+  const [jaar, maand, dag] = datumStr.split('-').map(Number);
+  return new Date(jaar, maand - 1, dag).getDay() === 2;
+}
+
 dienstSelect.addEventListener('change', laadBeschikbaarheid);
-datumInput.addEventListener('change', laadBeschikbaarheid);
+datumInput.addEventListener('change', () => {
+  if (datumInput.value && isDinsdag(datumInput.value)) {
+    messageEl.style.color = 'salmon';
+    messageEl.textContent = 'We zijn dinsdag gesloten. Kies een andere dag.';
+    datumInput.value = '';
+    tijdslotSelect.innerHTML = '<option value="">Kies eerst een datum</option>';
+    return;
+  }
+  messageEl.textContent = '';
+  laadBeschikbaarheid();
+});
 
 // Formulier versturen
 form.addEventListener('submit', async (e) => {
