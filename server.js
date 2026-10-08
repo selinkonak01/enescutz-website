@@ -108,19 +108,35 @@ function datumVoluit(datum) {
   return `${dag} ${MAAND_NAMEN[maand - 1]} ${jaar}`;
 }
 
+// Openingsuren per dag van de week (0 = zondag ... 6 = zaterdag). null = die dag volledig gesloten.
+// Vrijdag loopt door tot middernacht, vandaar '24:00' als einde.
+const OPENINGSUREN = {
+  0: { start: '09:00', einde: '22:00' }, // zondag
+  1: { start: '19:00', einde: '22:00' }, // maandag
+  2: null,                               // dinsdag: gesloten
+  3: { start: '19:00', einde: '22:00' }, // woensdag
+  4: { start: '15:00', einde: '22:00' }, // donderdag
+  5: { start: '20:00', einde: '24:00' }, // vrijdag, tot middernacht
+  6: { start: '09:00', einde: '22:00' }, // zaterdag
+};
+
 // Enes is dinsdag niet bereikbaar: die dag is de zaak volledig gesloten
 function isGeslotenOpDatum(datum) {
-  const dag = new Date(datum + 'T00:00:00').getDay(); // 0 = zondag, 2 = dinsdag
-  return dag === 2;
+  const dag = new Date(datum + 'T00:00:00').getDay();
+  return OPENINGSUREN[dag] === null;
 }
 
 // geeft de openingsuren (in minuten) terug voor een bepaalde datum
 function openingsurenVoorDatum(datum) {
-  const dag = new Date(datum + 'T00:00:00').getDay(); // 0 = zondag, 6 = zaterdag
-  const isWeekend = dag === 0 || dag === 6;
-  return isWeekend
-    ? { start: tijdNaarMinuten('09:00'), einde: tijdNaarMinuten('22:00') }
-    : { start: tijdNaarMinuten('19:00'), einde: tijdNaarMinuten('22:00') };
+  const dag = new Date(datum + 'T00:00:00').getDay();
+  const uren = OPENINGSUREN[dag];
+  if (!uren) {
+    return { start: 0, einde: 0 };
+  }
+  return {
+    start: tijdNaarMinuten(uren.start),
+    einde: tijdNaarMinuten(uren.einde),
+  };
 }
 
 // ---- Routes ----
