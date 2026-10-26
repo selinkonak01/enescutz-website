@@ -7,6 +7,15 @@ const passwordInput = document.getElementById('password');
 const loginMessage = document.getElementById('login-message');
 const bookingsBody = document.getElementById('bookings-body');
 
+const overrideForm = document.getElementById('override-form');
+const overrideDatumInput = document.getElementById('override-datum');
+const overrideGeslotenCheckbox = document.getElementById('override-gesloten');
+const overrideUrenVelden = document.getElementById('override-uren-velden');
+const overrideStartInput = document.getElementById('override-start');
+const overrideEindeInput = document.getElementById('override-einde');
+const overrideMessage = document.getElementById('override-message');
+const overridesLijst = document.getElementById('overrides-lijst');
+
 // Was er deze sessie al ingelogd? Dan meteen doorgaan.
 const opgeslagenWachtwoord = sessionStorage.getItem('admin-wachtwoord');
 if (opgeslagenWachtwoord) {
@@ -37,6 +46,7 @@ async function toonPaneel(wachtwoord) {
 
   const boekingen = await response.json();
   renderBoekingen(boekingen, wachtwoord);
+  laadOverrides(wachtwoord);
   loginSection.classList.add('hidden');
   panelSection.classList.remove('hidden');
   return true;
@@ -164,3 +174,90 @@ function renderBoekingen(boekingen, wachtwoord) {
     });
   });
 }
+
+// Checkbox "volledig gesloten" toont/verbergt de uur-velden
+overrideGeslotenCheckbox.addEventListener('change', () => {
+  const gesloten = overrideGeslotenCheckbox.checked;
+  overrideUrenVelden.classList.toggle('hidden', gesloten);
+  overrideStartInput.required = !gesloten;
+  overrideEindeInput.required = !gesloten;
+});
+
+// Uur-uitzonderingen ophalen en als lijst tonen, met een knop om ze te verwijderen
+async function laadOverrides(wachtwoord) {
+  const response = await fetch(`${API_URL}/api/overrides`, {
+    headers: { 'x-admin-password': wachtwoord },
+  });
+  if (!response.ok) return;
+
+  const overrides = await response.json();
+
+  if (overrides.length === 0) {
+    overridesLijst.innerHTML = '<p class="overrides-leeg">Geen uitzonderingen ingesteld.</p>';
+    return;
+  }
+
+  overridesLijst.innerHTML = overrides
+    .map(
+      (o) => `
+      <div class="override-item">
+        <span class="override-datum">${datumVoluit(o.datum)}</span>
+        <span class="override-uren">${o.gesloten ? 'Volledig gesloten' : `${o.start} - ${o.einde}`}</span>
+        <button class="delete-btn override-delete-btn" data-datum="${o.datum}">Verwijder</button>
+      </div>
+    `
+    )
+    .join('');
+
+  overridesLijst.querySelectorAll('.override-delete-btn').forEach((btn) => {
+    btn.addEventListener('click', async () => {
+      const { datum } = btn.dataset;
+      const wachtwoord = sessionStorage.getItem('admin-wachtwoord');
+
+      const zeker = confirm(`Uitzondering voor ${datumVoluit(datum)} verwijderen? Die dag valt dan terug op de vaste weekuren.`);
+      if (!zeker) return;
+
+      await fetch(`${API_URL}/api/overrides/${datum}`, {
+        method: 'DELETE',
+        headers: { 'x-admin-password': wachtwoord },
+      });
+
+      laadOverrides(wachtwoord);
+    });
+  });
+}
+
+// Nieuwe uur-uitzondering opslaan
+overrideForm.addEventListener('submit', async (e) => {
+  e.preventDefault();
+  overrideMessage.textContent = '';
+
+  const wachtwoord = sessionStorage.getItem('admin-wachtwoord');
+  const datum = overrideDatumInput.value;
+  const gesloten = overrideGeslotenCheckbox.checked;
+
+  const body = gesloten
+    ? { gesloten: true }
+    : { gesloten: false, start: overrideStartInput.value, einde: overrideEindeInput.value };
+
+  const response = await fetch(`${API_URL}/api/overrides/${datum}`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json', 'x-admin-password': wachtwoord },
+    body: JSON.stringify(body),
+  });
+
+  const resultaat = await response.json();
+
+  if (response.ok) {
+    overrideMessage.style.color = 'lightgreen';
+    overrideMessage.textContent = 'Opgeslagen!';
+    overrideForm.reset();
+    overrideUrenVelden.classList.remove('hidden');
+    overrideStartInput.required = true;
+    overrideEindeInput.required = true;
+    laadOverrides(wachtwoord);
+  } else {
+    overrideMessage.style.color = 'salmon';
+    overrideMessage.textContent = resultaat.fout || 'Er ging iets mis, probeer opnieuw.';
+  }
+});

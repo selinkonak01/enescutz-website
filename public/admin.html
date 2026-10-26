@@ -51,6 +51,35 @@
           <tbody id="bookings-body"></tbody>
         </table>
       </div>
+
+      <h2 class="uren-titel">Uren aanpassen</h2>
+      <p class="uren-uitleg">
+        Standaard gelden je vaste weekuren. Heb je op 1 specifieke dag andere uren nodig
+        (bv. korter werken door een trouwfeest, of die dag volledig sluiten)? Stel dat hier in,
+        enkel voor die ene datum.
+      </p>
+      <form id="override-form" class="admin-form override-form">
+        <label for="override-datum">Datum</label>
+        <input type="date" id="override-datum" name="override-datum" required />
+
+        <label class="override-gesloten-label">
+          <input type="checkbox" id="override-gesloten" />
+          Die dag volledig gesloten
+        </label>
+
+        <div id="override-uren-velden" class="override-uren-velden">
+          <label for="override-start">Van</label>
+          <input type="time" id="override-start" />
+
+          <label for="override-einde">Tot</label>
+          <input type="time" id="override-einde" />
+        </div>
+
+        <button type="submit" class="btn btn-outline">Opslaan</button>
+        <p id="override-message"></p>
+      </form>
+
+      <div id="overrides-lijst" class="overrides-lijst"></div>
     </section>
 
     <script src="admin.js"></script>

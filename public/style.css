@@ -599,6 +599,82 @@ footer {
   color: var(--color-black);
 }
 
+/* Uren aanpassen (beheerscherm) */
+.uren-titel {
+  text-align: center;
+  margin-top: 3.5rem;
+}
+.uren-uitleg {
+  max-width: 480px;
+  margin: 0.5rem auto 2rem;
+  text-align: center;
+  color: var(--color-gray);
+  font-size: 0.9rem;
+}
+.override-form {
+  margin-bottom: 2rem;
+}
+.override-gesloten-label {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  font-family: var(--font-label);
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--color-gray);
+  cursor: pointer;
+}
+.override-gesloten-label input {
+  width: 16px;
+  height: 16px;
+  accent-color: var(--color-gold);
+}
+.override-uren-velden {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+.override-uren-velden.hidden {
+  display: none;
+}
+#override-message {
+  color: salmon;
+  font-size: 0.9rem;
+  text-align: center;
+  min-height: 1.2rem;
+}
+.overrides-lijst {
+  max-width: 480px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+.overrides-leeg {
+  text-align: center;
+  color: var(--color-gray);
+  font-size: 0.9rem;
+}
+.override-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.8rem;
+  flex-wrap: wrap;
+  border: 1px solid rgba(245, 241, 234, 0.1);
+  border-radius: 2px;
+  padding: 0.8rem 1rem;
+  font-size: 0.9rem;
+}
+.override-datum {
+  font-family: var(--font-label);
+  color: var(--color-white);
+}
+.override-uren {
+  color: var(--color-gold);
+}
+
 /* Volledig uitgeschreven datum onder het datumveld in het boekingsformulier */
 .datum-voluit {
   font-family: var(--font-label);
