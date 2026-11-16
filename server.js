@@ -141,7 +141,7 @@ const OPENINGSUREN = {
   1: { start: "19:00", einde: "22:00" }, // maandag
   2: null, // dinsdag: gesloten
   3: { start: "19:00", einde: "22:00" }, // woensdag
-  4: { start: "15:00", einde: "19:00" }, // donderdag
+  4: { start: "19:00", einde: "22:00" }, // donderdag
   5: { start: "20:00", einde: "24:00" }, // vrijdag, tot middernacht
   6: { start: "09:00", einde: "22:00" }, // zaterdag
 };
